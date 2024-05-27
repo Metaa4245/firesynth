@@ -1,13 +1,35 @@
-// Copyright 2024 Metaa4245
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//     http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// MIT License
+
+// Copyright (c) 2024 Metaa4245
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+#![windows_subsystem = "windows"]
+#![deny(clippy::complexity)]
+#![deny(clippy::correctness)]
+#![deny(clippy::nursery)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::perf)]
+#![deny(clippy::style)]
+#![deny(clippy::suspicious)]
+#![deny(clippy::unwrap_used)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_sign_loss)]
 
 use std::{fs::File, ptr::null_mut, sync::Arc};
 
@@ -16,11 +38,10 @@ use nwg::{CheckBoxState, NativeUi};
 use rustysynth::{MidiFile, MidiFileSequencer, SoundFont, Synthesizer, SynthesizerSettings};
 use winapi::um::winuser::{MessageBoxW, MB_OK};
 
-fn checkbox_state_as_bool(state: CheckBoxState) -> bool {
+const fn checkbox_state_as_bool(state: CheckBoxState) -> bool {
     match state {
         CheckBoxState::Checked => true,
-        CheckBoxState::Unchecked => false,
-        CheckBoxState::Indeterminate => false,
+        CheckBoxState::Unchecked | CheckBoxState::Indeterminate => false,
     }
 }
 
@@ -104,7 +125,7 @@ pub struct FireSynth {
 }
 
 impl FireSynth {
-    fn window_init(&self) {
+    fn window_init(_: &Self) {
         std::panic::set_hook(Box::new(|info| {
             let backtrace = std::backtrace::Backtrace::force_capture();
 
@@ -130,7 +151,8 @@ impl FireSynth {
         if self.midi_dialog.run(Some(&self.window)) {
             self.midi_path.set_text("");
             if let Ok(dir) = self.midi_dialog.get_selected_item() {
-                self.midi_path.set_text(&dir.into_string().unwrap());
+                self.midi_path
+                    .set_text(&dir.into_string().expect("turning dir into string failed"));
             }
         }
     }
@@ -139,7 +161,8 @@ impl FireSynth {
         if self.sf_dialog.run(Some(&self.window)) {
             self.sf_path.set_text("");
             if let Ok(dir) = self.sf_dialog.get_selected_item() {
-                self.sf_path.set_text(&dir.into_string().unwrap());
+                self.sf_path
+                    .set_text(&dir.into_string().expect("turning dir into string failed"));
             }
         }
     }
@@ -148,28 +171,34 @@ impl FireSynth {
         if self.save_file_dialog.run(Some(&self.window)) {
             self.output_path.set_text("");
             if let Ok(dir) = self.save_file_dialog.get_selected_item() {
-                self.output_path.set_text(&dir.into_string().unwrap());
+                self.output_path
+                    .set_text(&dir.into_string().expect("turning dir into string failed"));
             }
         }
     }
 
     fn render(&self) {
-        let sample_rate: i32 = self.sample_rate.text().parse().unwrap();
+        let sample_rate: i32 = self
+            .sample_rate
+            .text()
+            .parse()
+            .expect("parsing sample rate into i32 failed");
 
-        let mut sf = File::open(self.sf_path.text()).unwrap();
-        let sound_font = Arc::new(SoundFont::new(&mut sf).unwrap());
+        let mut sf = File::open(self.sf_path.text()).expect("opening SoundFont failed");
+        let sound_font = Arc::new(SoundFont::new(&mut sf).expect("creating SoundFont failed"));
 
-        let mut midi = File::open(self.midi_path.text()).unwrap();
-        let midi_file = Arc::new(MidiFile::new(&mut midi).unwrap());
+        let mut midi = File::open(self.midi_path.text()).expect("opening MIDI failed");
+        let midi_file = Arc::new(MidiFile::new(&mut midi).expect("creating MIDI failed"));
 
         let mut settings = SynthesizerSettings::new(sample_rate);
         settings.enable_reverb_and_chorus = checkbox_state_as_bool(self.reverb.check_state());
-        let synthesizer = Synthesizer::new(&sound_font, &settings).unwrap();
+        let synthesizer =
+            Synthesizer::new(&sound_font, &settings).expect("creating synthesizer failed");
         let mut sequencer = MidiFileSequencer::new(synthesizer);
 
         sequencer.play(&midi_file, false);
 
-        let sample_count = (sample_rate as f64 * midi_file.get_length()) as usize;
+        let sample_count = (f64::from(sample_rate) * midi_file.get_length()) as usize;
         let mut left: Vec<f32> = vec![0_f32; sample_count];
         let mut right: Vec<f32> = vec![0_f32; sample_count];
 
@@ -177,21 +206,28 @@ impl FireSynth {
 
         let spec = hound::WavSpec {
             channels: 2,
-            sample_rate: sample_rate as u32,
+            sample_rate: sample_rate
+                .try_into()
+                .expect("converting sample_rate into u32 failed"),
             bits_per_sample: 32,
             sample_format: hound::SampleFormat::Float,
         };
-        let mut writer = hound::WavWriter::create(self.output_path.text(), spec).unwrap();
+        let mut writer = hound::WavWriter::create(self.output_path.text(), spec)
+            .expect("creating WAV writer failed");
 
         for sample in left.iter().zip(right.iter()) {
-            writer.write_sample(*sample.0).unwrap(); // left
-            writer.write_sample(*sample.1).unwrap(); // right
+            writer
+                .write_sample(*sample.0)
+                .expect("writing wav left channel failed"); // left
+            writer
+                .write_sample(*sample.1)
+                .expect("writing wav right channel failed"); // right
         }
 
         self.status.set_text("Done");
     }
 
-    fn close(&self) {
+    fn close(_: &Self) {
         nwg::stop_thread_dispatch();
     }
 }
@@ -199,6 +235,6 @@ impl FireSynth {
 fn main() {
     nwg::init().expect("initializing native windows GUI failed");
     nwg::Font::set_global_family("Segoe UI").expect("setting font failed");
-    let _app = FireSynth::build_ui(Default::default()).expect("building UI failed");
+    let _app = FireSynth::build_ui(FireSynth::default()).expect("building UI failed");
     nwg::dispatch_thread_events();
 }

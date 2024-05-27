@@ -1,7 +1,10 @@
 [package]
 name = "firesynth"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
+description = "GUI Windows-Only SoundFont MIDI renderer"
+license = "MIT"
+repository = "https://github.com/Metaa4245/firesynth"
 
 [dependencies]
 nwg = { version = "1.0.12", package = "native-windows-gui", default-features = false, features = [

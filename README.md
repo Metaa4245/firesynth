@@ -1,2 +1,2 @@
 # FireSynth
-GUI Windows-Only SoundFont MIDI synthesizer
+GUI Windows-Only SoundFont MIDI renderer

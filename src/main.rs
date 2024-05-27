@@ -107,7 +107,7 @@ pub struct FireSynth {
     sample_rate: nwg::TextInput,
 
     #[nwg_control(text: "Reverb, chorus")]
-    #[nwg_layout_item(layout: grid, col: 2, row: 8, col_span: 2)]
+    #[nwg_layout_item(layout: grid, col: 0, row: 8, col_span: 2)]
     reverb: nwg::CheckBox,
 
     #[nwg_resource(title: "Open MIDI", action: nwg::FileDialogAction::Open, filters: "MIDI(*.mid;*.midi)")]

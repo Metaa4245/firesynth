@@ -9,16 +9,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{fs::File, sync::Arc};
+use std::{fs::File, ptr::null_mut, sync::Arc};
 
 use nwd::NwgUi;
 use nwg::NativeUi;
 use rustysynth::{MidiFile, MidiFileSequencer, SoundFont, Synthesizer, SynthesizerSettings};
+use winapi::um::winuser::{MessageBoxW, MB_OK};
 
 #[derive(Default, NwgUi)]
 pub struct FireSynth {
-    #[nwg_control(size: (300, 300), position: (300, 300), title: "FireSynth", flags: "WINDOW|VISIBLE")]
-    #[nwg_events(OnWindowClose: [FireSynth::close])]
+    #[nwg_control(size: (300, 300), position: (300, 300), title: "FireSynth", flags: "WINDOW|VISIBLE|RESIZABLE")]
+    #[nwg_events(OnWindowClose: [FireSynth::close], OnInit: [FireSynth::window_init])]
     window: nwg::Window,
 
     #[nwg_layout(parent: window, spacing: 2, min_size: [150, 140])]
@@ -68,6 +69,28 @@ pub struct FireSynth {
 }
 
 impl FireSynth {
+    fn window_init(&self) {
+        std::panic::set_hook(Box::new(|info| {
+            let backtrace = std::backtrace::Backtrace::force_capture();
+
+            let mut panic_str: Vec<u16> = format!("panic info: {info}\n backtrace: {backtrace}")
+                .as_str()
+                .encode_utf16()
+                .collect();
+            panic_str.push(0);
+            let panic_str = panic_str.as_ptr();
+
+            let mut title_str: Vec<u16> = "Panic".encode_utf16().collect();
+            title_str.push(0);
+            let title_str = title_str.as_ptr();
+
+            // safety: calls MessageBoxW
+            unsafe {
+                MessageBoxW(null_mut(), panic_str, title_str, MB_OK);
+            }
+        }));
+    }
+
     fn midi_select(&self) {
         if self.open_file_dialog.run(Some(&self.window)) {
             self.midi_path.set_text("");

@@ -61,10 +61,13 @@ pub struct FireSynth {
     #[nwg_layout_item(layout: grid, col: 0, row: 7, col_span: 1)]
     status: nwg::TextInput,
 
-    #[nwg_resource(title: "Open File", action: nwg::FileDialogAction::Open)]
-    open_file_dialog: nwg::FileDialog,
+    #[nwg_resource(title: "Open MIDI", action: nwg::FileDialogAction::Open, filters: "MIDI(*.mid;*.midi)")]
+    midi_dialog: nwg::FileDialog,
 
-    #[nwg_resource(title: "Save File", action: nwg::FileDialogAction::Save)]
+    #[nwg_resource(title: "Open SoundFont", action: nwg::FileDialogAction::Open, filters: "SoundFont(*.sf;*.sf2;*.sf3)")]
+    sf_dialog: nwg::FileDialog,
+
+    #[nwg_resource(title: "Save File", action: nwg::FileDialogAction::Save, filters: "WAV(*.wav)")]
     save_file_dialog: nwg::FileDialog,
 }
 
@@ -92,18 +95,18 @@ impl FireSynth {
     }
 
     fn midi_select(&self) {
-        if self.open_file_dialog.run(Some(&self.window)) {
+        if self.midi_dialog.run(Some(&self.window)) {
             self.midi_path.set_text("");
-            if let Ok(dir) = self.open_file_dialog.get_selected_item() {
+            if let Ok(dir) = self.midi_dialog.get_selected_item() {
                 self.midi_path.set_text(&dir.into_string().unwrap());
             }
         }
     }
 
     fn sf_select(&self) {
-        if self.open_file_dialog.run(Some(&self.window)) {
+        if self.sf_dialog.run(Some(&self.window)) {
             self.sf_path.set_text("");
-            if let Ok(dir) = self.open_file_dialog.get_selected_item() {
+            if let Ok(dir) = self.sf_dialog.get_selected_item() {
                 self.sf_path.set_text(&dir.into_string().unwrap());
             }
         }

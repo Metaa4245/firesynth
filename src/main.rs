@@ -73,14 +73,14 @@ impl FireSynth {
         std::panic::set_hook(Box::new(|info| {
             let backtrace = std::backtrace::Backtrace::force_capture();
 
-            let mut panic_str: Vec<u16> = format!("panic info: {info}\n backtrace: {backtrace}")
+            let mut panic_str = format!("panic info: {info}\n backtrace: {backtrace}")
                 .as_str()
                 .encode_utf16()
-                .collect();
+                .collect::<Vec<_>>();
             panic_str.push(0);
             let panic_str = panic_str.as_ptr();
 
-            let mut title_str: Vec<u16> = "Panic".encode_utf16().collect();
+            let mut title_str = "Panic".encode_utf16().collect::<Vec<_>>();
             title_str.push(0);
             let title_str = title_str.as_ptr();
 
@@ -146,9 +146,8 @@ impl FireSynth {
         let mut writer = hound::WavWriter::create(self.output_path.text(), spec).unwrap();
 
         for sample in left.iter().zip(right.iter()) {
-            let (sample_left, sample_right) = sample;
-            writer.write_sample(*sample_left).unwrap();
-            writer.write_sample(*sample_right).unwrap();
+            writer.write_sample(*sample.0).unwrap(); // left
+            writer.write_sample(*sample.1).unwrap(); // right
         }
 
         self.status.set_text("Done");

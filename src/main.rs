@@ -51,68 +51,64 @@ pub struct FireSynth {
     #[nwg_events(OnWindowClose: [FireSynth::close], OnInit: [FireSynth::window_init])]
     window: nwg::Window,
 
-    #[nwg_layout(parent: window, spacing: 2, min_size: [150, 140])]
+    #[nwg_layout(parent: window, spacing: 2, min_size: [300, 300])]
     grid: nwg::GridLayout,
 
     #[nwg_control(text: "Select MIDI")]
-    #[nwg_layout_item(layout: grid, col: 0, row: 0, col_span: 1, row_span: 2)]
+    #[nwg_layout_item(layout: grid, col: 0, row: 0, col_span: 2, row_span: 2)]
     #[nwg_events(OnButtonClick: [FireSynth::midi_select])]
     midi_button: nwg::Button,
 
     #[nwg_control(text: "Select SoundFont")]
-    #[nwg_layout_item(layout: grid, col: 0, row: 2, col_span: 1, row_span: 2)]
+    #[nwg_layout_item(layout: grid, col: 0, row: 2, col_span: 2, row_span: 2)]
     #[nwg_events(OnButtonClick: [FireSynth::sf_select])]
     sf_button: nwg::Button,
 
-    #[nwg_control(text: "Select Dest")]
-    #[nwg_layout_item(layout: grid, col: 0, row: 4, col_span: 1, row_span: 2)]
+    #[nwg_control(text: "Select Destination")]
+    #[nwg_layout_item(layout: grid, col: 0, row: 4, col_span: 2, row_span: 2)]
     #[nwg_events(OnButtonClick: [FireSynth::output_select])]
     output_button: nwg::Button,
 
     #[nwg_control(text: "Render")]
-    #[nwg_layout_item(layout: grid, col: 0, row: 6, col_span: 1, row_span: 2)]
+    #[nwg_layout_item(layout: grid, col: 0, row: 6, col_span: 2, row_span: 2)]
     #[nwg_events(OnButtonClick: [FireSynth::render])]
     render_button: nwg::Button,
 
     #[nwg_control(text: "MIDI Path")]
-    #[nwg_layout_item(layout: grid, col: 1, row: 0, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 0, col_span: 2)]
     midi_label: nwg::Label,
 
     #[nwg_control(readonly: true)]
-    #[nwg_layout_item(layout: grid, col: 1, row: 1, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 1, col_span: 2)]
     midi_path: nwg::TextInput,
 
     #[nwg_control(text: "SoundFont Path")]
-    #[nwg_layout_item(layout: grid, col: 1, row: 2, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 2, col_span: 2)]
     sf_label: nwg::Label,
 
     #[nwg_control(readonly: true)]
-    #[nwg_layout_item(layout: grid, col: 1, row: 3, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 3, col_span: 2)]
     sf_path: nwg::TextInput,
 
     #[nwg_control(text: "Output Path")]
-    #[nwg_layout_item(layout: grid, col: 1, row: 4, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 4, col_span: 2)]
     output_label: nwg::Label,
 
     #[nwg_control(readonly: true)]
-    #[nwg_layout_item(layout: grid, col: 1, row: 5, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 5, col_span: 2)]
     output_path: nwg::TextInput,
 
     #[nwg_control(text: "Sample Rate")]
-    #[nwg_layout_item(layout: grid, col: 1, row: 6, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 6, col_span: 2)]
     rate_label: nwg::Label,
 
     #[nwg_control(text: "44100")]
-    #[nwg_layout_item(layout: grid, col: 1, row: 7, col_span: 1)]
+    #[nwg_layout_item(layout: grid, col: 2, row: 7, col_span: 2)]
     sample_rate: nwg::TextInput,
 
-    #[nwg_control(text: "Reverb and chorus")]
-    #[nwg_layout_item(layout: grid, col: 0, row: 8, col_span: 2)]
+    #[nwg_control(text: "Reverb, chorus")]
+    #[nwg_layout_item(layout: grid, col: 2, row: 8, col_span: 2)]
     reverb: nwg::CheckBox,
-
-    #[nwg_control(readonly: true)]
-    #[nwg_layout_item(layout: grid, col: 0, row: 9, col_span: 2)]
-    status: nwg::TextInput,
 
     #[nwg_resource(title: "Open MIDI", action: nwg::FileDialogAction::Open, filters: "MIDI(*.mid;*.midi)")]
     midi_dialog: nwg::FileDialog,
@@ -224,7 +220,7 @@ impl FireSynth {
                 .expect("writing wav right channel failed"); // right
         }
 
-        self.status.set_text("Done");
+        nwg::modal_info_message(&self.window, "Finished", "Done");
     }
 
     fn close(_: &Self) {

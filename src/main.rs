@@ -38,11 +38,22 @@ use nwg::{CheckBoxState, NativeUi};
 use rustysynth::{MidiFile, MidiFileSequencer, SoundFont, Synthesizer, SynthesizerSettings};
 use winapi::um::winuser::{MessageBoxW, MB_OK};
 
-const fn checkbox_state_as_bool(state: CheckBoxState) -> bool {
-    match state {
-        CheckBoxState::Checked => true,
-        CheckBoxState::Unchecked | CheckBoxState::Indeterminate => false,
+macro_rules! file_dialog {
+    ($name:ident) => {
+        fn $name_select(&self) {
+            if self.$name_dialog.run(Some(&self.window)) {
+                self.$name_path.set_text("");
+                if let Ok(dir) = self.$name_dialog.get_selected_item() {
+                    self.$name_path
+                        .set_text(&dir.into_string().expect("turning dir into string failed"));
+                }
+            }
+        }
     }
+}
+
+const fn checkbox_state_as_bool(state: CheckBoxState) -> bool {
+    matches!(state, CheckBoxState::Checked)
 }
 
 #[derive(Default, NwgUi)]
@@ -143,35 +154,9 @@ impl FireSynth {
         }));
     }
 
-    fn midi_select(&self) {
-        if self.midi_dialog.run(Some(&self.window)) {
-            self.midi_path.set_text("");
-            if let Ok(dir) = self.midi_dialog.get_selected_item() {
-                self.midi_path
-                    .set_text(&dir.into_string().expect("turning dir into string failed"));
-            }
-        }
-    }
-
-    fn sf_select(&self) {
-        if self.sf_dialog.run(Some(&self.window)) {
-            self.sf_path.set_text("");
-            if let Ok(dir) = self.sf_dialog.get_selected_item() {
-                self.sf_path
-                    .set_text(&dir.into_string().expect("turning dir into string failed"));
-            }
-        }
-    }
-
-    fn output_select(&self) {
-        if self.save_file_dialog.run(Some(&self.window)) {
-            self.output_path.set_text("");
-            if let Ok(dir) = self.save_file_dialog.get_selected_item() {
-                self.output_path
-                    .set_text(&dir.into_string().expect("turning dir into string failed"));
-            }
-        }
-    }
+    file_dialog!(midi);
+    file_dialog!(sf);
+    file_dialog!(output);
 
     fn render(&self) {
         let sample_rate: i32 = self
@@ -214,10 +199,10 @@ impl FireSynth {
         for sample in left.iter().zip(right.iter()) {
             writer
                 .write_sample(*sample.0)
-                .expect("writing wav left channel failed"); // left
+                .expect("writing wav left channel failed");
             writer
                 .write_sample(*sample.1)
-                .expect("writing wav right channel failed"); // right
+                .expect("writing wav right channel failed");
         }
 
         nwg::modal_info_message(&self.window, "Finished", "Done");
